@@ -1,11 +1,12 @@
 import subprocess
 import sys
 
-# Принудительная установка setuptools, если pkg_resources не найден
+# Принудительная установка СТАРОЙ версии setuptools, где есть pkg_resources
 try:
     import pkg_resources
 except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools"])
+    # Версия 58.0 — последняя максимально стабильная с pkg_resources
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools==58.0"])
     import pkg_resources
 
 import os
