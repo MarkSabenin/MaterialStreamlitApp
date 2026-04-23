@@ -6,4 +6,4 @@ joblib
 scikit-learn
 tensorflow
 gpflow
-setuptools
+setuptools==58.0
