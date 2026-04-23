@@ -1,0 +1,11 @@
+.venv/
+venv/
+/venv/
+/.venv/
+__pycache__/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyc
+diagnose.py
