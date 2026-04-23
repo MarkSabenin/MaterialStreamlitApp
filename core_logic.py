@@ -36,16 +36,18 @@ def apply_fe(pct_arr, is_stat_arr, is_uv_arr, version):
 
 def load_hybrid_system():
     """Загрузка моделей и РЕКОНСТРУКЦИЯ данных для GPflow"""
-    meta = joblib.load('model_package/metadata.pkl')
-    sc_y = joblib.load('model_package/scaler_y.pkl')
-    scaler_x_gp = joblib.load('model_package/scaler_x_gp.pkl')
+    base_path = "model_package"
+    # metadata = joblib.load(f"{base_path}/metadata.pkl")
+    meta = joblib.load(f"{base_path}/metadata.pkl")
+    sc_y = joblib.load(f'{base_path}/scaler_y.pkl')
+    scaler_x_gp = joblib.load(f'{base_path}/scaler_x_gp.pkl')
     
     # 1. Загрузка Sklearn моделей
     models_sk = {}
     scalers_x_sk = {}
     for k in meta['sk_indices']:
-        models_sk[k] = joblib.load(f'model_package/sk_models/gpr_model_{k}.pkl')
-        scalers_x_sk[k] = joblib.load(f'model_package/sk_models/scaler_x_{k}.pkl')
+        models_sk[k] = joblib.load(f'{base_path}/sk_models/gpr_model_{k}.pkl')
+        scalers_x_sk[k] = joblib.load(f'{base_path}/sk_models/scaler_x_{k}.pkl')
         
     # 2. РЕКОНСТРУКЦИЯ ДАННЫХ ДЛЯ GPFLOW (Критически важно!)
     # Модель GPR не работает без обучающих точек
@@ -83,7 +85,7 @@ def load_hybrid_system():
     
     # Восстановление весов из чекпоинта
     ckpt = tf.train.Checkpoint(model=model_gp)
-    latest = tf.train.latest_checkpoint('model_package/gpflow_weights/')
+    latest = tf.train.latest_checkpoint(f'{base_path}/gpflow_weights/')
     if latest:
         ckpt.restore(latest).expect_partial()
     
