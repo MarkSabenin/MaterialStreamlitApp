@@ -7,3 +7,4 @@ scikit-learn
 tensorflow
 gpflow
 setuptools==58.0
+openpyxl
