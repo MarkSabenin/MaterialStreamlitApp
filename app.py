@@ -1,3 +1,7 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU')
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -5,8 +9,7 @@ import plotly
 import plotly.graph_objects as go 
 import plotly.express as px
 from core_logic import load_hybrid_system, predict_hybrid, solve_inverse_problem, get_plot_data
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Скрыть мусор от TF
+
 
 if 'comparison_list' not in st.session_state:
     st.session_state['comparison_list'] = []
