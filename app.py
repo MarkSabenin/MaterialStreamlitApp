@@ -1,8 +1,14 @@
 import os
+# Отключаем логи TensorFlow и GPU, чтобы сэкономить память
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+import streamlit as st
+# Принудительно ограничиваем использование оперативной памяти для TF
 import tensorflow as tf
 tf.config.set_visible_devices([], 'GPU')
-import streamlit as st
+# Включаем оптимизацию памяти
+tf.config.experimental.set_memory_growth = True
+
 import pandas as pd
 import numpy as np
 import plotly
