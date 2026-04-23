@@ -6,4 +6,3 @@ joblib
 scikit-learn
 tensorflow
 gpflow
-pkg_resources
