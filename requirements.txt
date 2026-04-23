@@ -6,5 +6,3 @@ joblib
 scikit-learn
 tensorflow
 gpflow
-os
-scipy
