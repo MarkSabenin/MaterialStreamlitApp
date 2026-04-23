@@ -1,3 +1,13 @@
+import subprocess
+import sys
+
+# Принудительная установка setuptools, если pkg_resources не найден
+try:
+    import pkg_resources
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools"])
+    import pkg_resources
+
 import os
 # Отключаем логи TensorFlow и GPU, чтобы сэкономить память
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
