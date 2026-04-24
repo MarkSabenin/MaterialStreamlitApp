@@ -53,7 +53,7 @@ def load_hybrid_system():
     scalers_x_sk = {}
     for k in meta['sk_indices']:
         models_sk[k] = joblib.load(f'{base_path}/sk_models/gpr_model_{k}.pkl')
-        scalers_x_sk[k] = joblib.load(f'{base_path}/scaler_x_{k}.pkl')
+        scalers_x_sk[k] = joblib.load(f'{base_path}/sk_models/scaler_x_{k}.pkl')
         
     df = pd.read_excel("raw_data_van.xlsx")
     method_ohe = ['Статическое', 'УЗ+100', 'Статическое с смешением в УВ']
