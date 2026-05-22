@@ -147,27 +147,66 @@ def predict_hybrid(cnt, method_idx, bundle):
 
 # Функции инверсии и отрисовки остаются прежними, так как они используют predict_hybrid
 def solve_inverse_problem(target_dict, weights, bundle):
-    # (Код без изменений, он опирается на исправленный predict_hybrid)
     meta = bundle['meta']
     sc_y = bundle['sc_y']
+    weights = np.array(weights)
+    
+    # 1. Подготовка целевого вектора в скалированном пространстве
     y_target_vec = np.zeros(5)
     for i, prop in enumerate(meta['prop_cols']):
         val = target_dict.get(prop, 0.0)
         y_target_vec[i] = np.log1p(val) if i in meta['log_indices'] else val
     y_target_sc = sc_y.transform(y_target_vec.reshape(1, -1)).flatten()
+    
     best_loss, best_cnt, best_m_idx = float('inf'), 1.0, 0
+    
+    # Извлекаем модели напрямую из бандла для быстрого доступа
+    models_sk = bundle['models_sk']
+    scalers_x_sk = bundle['scalers_x_sk']
+    model_gp = bundle['model_gp']
+    scaler_x_gp = bundle['scaler_x_gp']
+    
+    # 2. Оптимизация
     for m_idx in [0, 1, 2]:
+        # Воспроизводим логику OHE-векторов из predict_hybrid
+        m_vec = [1.0, 0.0] if m_idx == 0 else ([0.0, 1.0] if m_idx == 2 else [0.0, 0.0])
+        
         def objective(cnt):
-            preds, _ = predict_hybrid(cnt, m_idx, bundle)
-            p_trans = np.zeros(5)
-            for i in range(5):
-                p_trans[i] = np.log1p(preds[i]) if i in meta['log_indices'] else preds[i]
-            p_sc = sc_y.transform(p_trans.reshape(1, -1)).flatten()
-            return np.sum(weights * (p_sc - y_target_sc)**2)
+            pct_arr = np.array([float(cnt)])
+            is_stat_arr, is_uv_arr = np.array([m_vec[0]]), np.array([m_vec[1]])
+            
+            # Сюда соберем предикты всех 5 моделей в СКАЛИРОВАННОМ пространстве
+            mu_sc_outputs = np.zeros(5)
+            
+            # А. Предикт Sklearn-моделей (загоняем в нужное свойство k)
+            for k in meta['sk_indices']:
+                fe_version = meta['sk_fe_versions'].get(k, 'base')
+                x_e = apply_fe(pct_arr, is_stat_arr, is_uv_arr, fe_version)
+                x_sc = scalers_x_sk[k].transform(x_e)
+                # Берем "сырое" предсказание до денормализации
+                mu_sc_outputs[k] = models_sk[k].predict(x_sc)[0]
+                
+            # Б. Предикт GPflow-модели
+            x_e_gp = apply_fe(pct_arr, is_stat_arr, is_uv_arr, 'full')
+            x_sc_gp = scaler_x_gp.transform(x_e_gp)
+            
+            for k in meta['gp_indices']:
+                x_aug_gp = np.append(x_sc_gp, [[float(k)]], axis=1)
+                # КРИТИЧЕСКИ ДЛЯ СКОРОСТИ: используем predict_f вместо predict_y
+                mu_sc_gp, _ = model_gp.predict_f(x_aug_gp)
+                mu_sc_outputs[k] = mu_sc_gp.numpy()[0, 0]
+            
+            # Честный расчет MSE в нормированном пространстве без лишних трансформаций
+            return np.sum(weights * (mu_sc_outputs - y_target_sc)**2)
+            
         res = minimize_scalar(objective, bounds=(1.0, 5.0), method='bounded')
+        
         if res.fun < best_loss:
             best_loss, best_cnt, best_m_idx = res.fun, res.x, m_idx
+            
+    # 3. Для самого лучшего рецепта один раз вызываем штатный денормализующий predict_hybrid
     final_preds, _ = predict_hybrid(best_cnt, best_m_idx, bundle)
+    
     return best_cnt, best_m_idx, final_preds
 
 def get_plot_data(prop_idx, bundle):
