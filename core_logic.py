@@ -145,7 +145,7 @@ def predict_hybrid(cnt, method_idx, bundle):
 
     return preds, stds
 
-# Функции инверсии и отрисовки остаются прежними, так как они используют predict_hybrid
+# Функции инверсии и отрисовки используют predict_hybrid
 def solve_inverse_problem(target_dict, weights, bundle):
     meta = bundle['meta']
     sc_y = bundle['sc_y']
@@ -196,7 +196,7 @@ def solve_inverse_problem(target_dict, weights, bundle):
                 mu_sc_gp, _ = model_gp.predict_f(x_aug_gp)
                 mu_sc_outputs[k] = mu_sc_gp.numpy()[0, 0]
             
-            # Честный расчет MSE в нормированном пространстве без лишних трансформаций
+            # Расчет MSE в нормированном пространстве без лишних трансформаций
             return np.sum(weights * (mu_sc_outputs - y_target_sc)**2)
             
         res = minimize_scalar(objective, bounds=(1.0, 5.0), method='bounded')
@@ -224,9 +224,9 @@ def get_plot_data(prop_idx, bundle):
         mu_arr = np.array(preds_l)
         std_arr = np.array(stds_l)
         
-        # КРИТИЧЕСКИЙ МОМЕНТ: Расчет интервалов
+        # Расчет интервалов
         if prop_idx in meta['log_indices']:
-            # Если свойство было логарифмировано, std — это ошибка в лог-пространстве
+            
             log_mu = np.log1p(mu_arr)
             lower = np.expm1(log_mu - 2 * std_arr)
             upper = np.expm1(log_mu + 2 * std_arr)
